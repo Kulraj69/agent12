@@ -636,9 +636,23 @@ class Fetch:
 
 # --- MCP Server Setup ---
 mcp = FastMCP(
-    "Job Finder MCP Server",
+    "Brand Visibility Monitoring MCP Server",
     auth=SimpleBearerAuthProvider(AUTH_TOKEN),
 )
+
+# Add a simple health check endpoint
+@mcp.get("/")
+async def health_check():
+    """Health check endpoint for Railway"""
+    return {
+        "status": "healthy",
+        "service": "Brand Visibility Monitoring MCP Server",
+        "version": "1.0.0",
+        "endpoints": {
+            "mcp": "/mcp",
+            "health": "/"
+        }
+    }
 
 # Initialize brand visibility monitor
 brand_monitor = BrandVisibilityMonitor(SERP_API_KEY, OPENAI_API_KEY)
