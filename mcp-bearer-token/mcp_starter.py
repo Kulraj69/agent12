@@ -973,31 +973,242 @@ async def generate_brand_blog_post(
     Returns comprehensive blog content with SEO keywords, geographic insights, and strategic recommendations.
     """
     try:
-        # First, run the brand visibility analysis
-        visibility_result = await brand_visibility_monitor(website, brand_name)
-        visibility_data = json.loads(visibility_result)
+        # First, run the brand visibility analysis by calling the function directly
+        # instead of the tool wrapper
+        search_results = await brand_monitor.search_brand_references(website, brand_name)
         
-        # Extract the raw analysis data
-        raw_analysis = visibility_data.get("raw_analysis", {})
+        # Generate ChatGPT prompts
+        prompts = brand_monitor.generate_chatgpt_prompts(brand_name, website)
+        
+        # Analyze results
+        presence_data = {
+            "total_results": len(search_results),
+            "brand_mentions": 0,
+            "top_ranking_positions": []
+        }
+        
+        sentiment_data = {
+            "positive": 0,
+            "neutral": 0,
+            "negative": 0,
+            "overall_sentiment": "neutral"
+        }
+        
+        all_competitors = []
+        visibility_scores = {}
+        chatgpt_analysis = {}
+        
+        # Analyze each search result (limit to first 10 for speed)
+        for i, result in enumerate(search_results[:10]):
+            title = result.get("title", "")
+            snippet = result.get("snippet", "")
+            full_text = f"{title} {snippet}"
+            
+            # Check presence
+            if brand_name.lower() in full_text.lower():
+                presence_data["brand_mentions"] += 1
+                if i < 10:  # Top 10 results
+                    presence_data["top_ranking_positions"].append(i + 1)
+            
+            # Use basic sentiment analysis for speed (skip ChatGPT for individual results)
+            sentiment = brand_monitor.analyze_sentiment(full_text)
+            sentiment_data[sentiment] += 1
+            
+            # Extract competitors using basic method for speed
+            competitors = brand_monitor.extract_competitors(full_text, brand_name)
+            all_competitors.extend(competitors)
+        
+        # Determine overall sentiment
+        if sentiment_data["positive"] > sentiment_data["negative"]:
+            sentiment_data["overall_sentiment"] = "positive"
+        elif sentiment_data["negative"] > sentiment_data["positive"]:
+            sentiment_data["overall_sentiment"] = "negative"
+        
+        # Get unique competitors
+        unique_competitors = list(set(all_competitors))[:10]
+        
+        # Analyze prompts with ChatGPT (limited for speed)
+        for i, prompt_data in enumerate(prompts[:2]):
+            sector = prompt_data["sector"]
+            prompt_text = prompt_data["prompt"]
+            
+            # Use ChatGPT for comprehensive analysis (only for first 2 prompts)
+            if brand_monitor.openai_api_key:
+                try:
+                    analysis = await brand_monitor.analyze_with_chatgpt(prompt_text, "brand_analysis")
+                    chatgpt_analysis[sector] = analysis
+                except:
+                    chatgpt_analysis[sector] = {"error": "ChatGPT analysis failed"}
+            
+            # Basic analysis
+            presence = brand_name.lower() in prompt_text.lower()
+            sentiment = brand_monitor.analyze_sentiment(prompt_text)
+            competitors = brand_monitor.extract_competitors(prompt_text, brand_name)
+            visibility_score = brand_monitor.calculate_visibility_score(search_results, brand_name)
+            
+            visibility_scores[sector] = {
+                "presence": presence,
+                "sentiment": sentiment,
+                "competitors": competitors,
+                "visibility_score": visibility_score
+            }
+        
+        # Add remaining prompts with basic analysis only
+        for i, prompt_data in enumerate(prompts[2:], 2):
+            sector = prompt_data["sector"]
+            prompt_text = prompt_data["prompt"]
+            
+            presence = brand_name.lower() in prompt_text.lower()
+            sentiment = brand_monitor.analyze_sentiment(prompt_text)
+            competitors = brand_monitor.extract_competitors(prompt_text, brand_name)
+            visibility_score = brand_monitor.calculate_visibility_score(search_results, brand_name)
+            
+            visibility_scores[sector] = {
+                "presence": presence,
+                "sentiment": sentiment,
+                "competitors": competitors,
+                "visibility_score": visibility_score
+            }
+        
+        # Generate improvement suggestions
+        improvement_suggestions = []
+        
+        if presence_data["brand_mentions"] < len(search_results) * 0.3:
+            improvement_suggestions.append("Increase brand mention frequency in online content and SEO optimization")
+        
+        if sentiment_data["negative"] > sentiment_data["positive"]:
+            improvement_suggestions.append("Address negative sentiment through customer service improvements and reputation management")
+        
+        if len(unique_competitors) > 5:
+            improvement_suggestions.append("Develop stronger competitive differentiation and unique value propositions")
+        
+        if presence_data["top_ranking_positions"]:
+            avg_position = sum(presence_data["top_ranking_positions"]) / len(presence_data["top_ranking_positions"])
+            if avg_position > 5:
+                improvement_suggestions.append("Improve search engine rankings through better SEO and content strategy")
+        
+        if not improvement_suggestions:
+            improvement_suggestions.append("Maintain current brand visibility and continue monitoring for opportunities")
+        
+        # Calculate overall visibility metrics
+        overall_visibility_score = brand_monitor.calculate_visibility_score(search_results, brand_name)
+        presence_strength = "very strong" if presence_data["brand_mentions"] >= len(search_results) * 0.7 else "strong" if presence_data["brand_mentions"] >= len(search_results) * 0.4 else "moderate" if presence_data["brand_mentions"] >= len(search_results) * 0.2 else "weak"
+        
+        # Create comprehensive report
+        report = {
+            "brand": brand_name,
+            "website": website,
+            "analysis_date": "as of today",
+            "overall_presence": {
+                "description": f"{brand_name} has a {presence_strength} online presence with {presence_data['total_results']} total results, {presence_data['brand_mentions']} of which directly mention the brand.",
+                "total_results": presence_data["total_results"],
+                "brand_mentions": presence_data["brand_mentions"],
+                "top_ranking_positions": presence_data["top_ranking_positions"],
+                "presence_strength": presence_strength
+            },
+            "sentiment": {
+                "overall": sentiment_data["overall_sentiment"],
+                "distribution": {
+                    "positive": sentiment_data["positive"],
+                    "neutral": sentiment_data["neutral"],
+                    "negative": sentiment_data["negative"]
+                }
+            },
+            "competitors": {
+                "key_competitors": unique_competitors,
+                "total_identified": len(unique_competitors)
+            },
+            "visibility_breakdown": {},
+            "improvement_suggestions": improvement_suggestions,
+            "chatgpt_analysis": {
+                "highlights": {},
+                "strengths": [],
+                "weaknesses": []
+            },
+            "technical_metrics": {
+                "overall_visibility_score": overall_visibility_score,
+                "search_coverage": f"{presence_data['brand_mentions']}/{presence_data['total_results']} results mention the brand",
+                "sentiment_ratio": f"{sentiment_data['positive']}:{sentiment_data['neutral']}:{sentiment_data['negative']}"
+            }
+        }
+        
+        # Add visibility breakdown for each sector
+        for sector, data in visibility_scores.items():
+            score_level = "very high" if data["visibility_score"] >= 80 else "high" if data["visibility_score"] >= 60 else "moderate" if data["visibility_score"] >= 40 else "low"
+            report["visibility_breakdown"][sector] = {
+                "visibility": f"{score_level} visibility ({data['visibility_score']}% score)",
+                "sentiment": data["sentiment"],
+                "presence": data["presence"],
+                "competitors": data["competitors"]
+            }
+        
+        # Extract ChatGPT insights
+        if chatgpt_analysis:
+            for sector, analysis in chatgpt_analysis.items():
+                if "error" not in analysis:
+                    if "strengths" in analysis:
+                        report["chatgpt_analysis"]["strengths"].extend(analysis.get("strengths", []))
+                    if "weaknesses" in analysis:
+                        report["chatgpt_analysis"]["weaknesses"].extend(analysis.get("weaknesses", []))
+                    if "key_insights" in analysis:
+                        report["chatgpt_analysis"]["highlights"][sector] = analysis.get("key_insights", [])
+        
+        # Format the report as a comprehensive text summary
+        summary = f"""Here's the brand visibility report for {brand_name} {report['analysis_date']}:
+
+Overall Presence: {brand_name} has a {presence_strength} online presence with {presence_data['total_results']} total results, {presence_data['brand_mentions']} of which directly mention the brand. It consistently ranks highly in search results, occupying the top {len(presence_data['top_ranking_positions'])} positions.
+
+Sentiment: The overall sentiment towards {brand_name} is {sentiment_data['overall_sentiment']}.
+
+Key Competitors: Competitors identified include {', '.join(unique_competitors[:8])}.
+
+Visibility Breakdown:
+"""
+        
+        for sector, data in report["visibility_breakdown"].items():
+            summary += f"- {sector}: {data['visibility']} with a {data['sentiment']} sentiment.\n"
+        
+        summary += f"""
+Improvement Suggestions:
+"""
+        for suggestion in improvement_suggestions:
+            summary += f"- {suggestion}\n"
+        
+        if report["chatgpt_analysis"]["strengths"] or report["chatgpt_analysis"]["weaknesses"]:
+            summary += f"""
+ChatGPT Analysis Highlights:
+"""
+            if report["chatgpt_analysis"]["strengths"]:
+                summary += f"- Strengths: {', '.join(set(report['chatgpt_analysis']['strengths'][:3]))}.\n"
+            if report["chatgpt_analysis"]["weaknesses"]:
+                summary += f"- Weaknesses: {', '.join(set(report['chatgpt_analysis']['weaknesses'][:3]))}.\n"
+        
+        summary += f"""
+Would you like me to delve deeper into any specific area of this report, or perhaps compare {brand_name} to one of its competitors?"""
+        
+        # Return both the structured data and the formatted summary
+        visibility_data = {
+            "formatted_summary": summary,
+            "detailed_data": report,
+            "raw_analysis": {
+                "presence": presence_data,
+                "sentiment": sentiment_data,
+                "competitors": unique_competitors,
+                "visibility_scores": visibility_scores,
+                "chatgpt_analysis": chatgpt_analysis
+            }
+        }
         
         # Prepare analysis data for blog generation
         analysis_data = {
-            "presence": raw_analysis.get("presence", {}),
-            "sentiment": raw_analysis.get("sentiment", {}),
-            "competitors": raw_analysis.get("competitors", []),
-            "search_results": [],  # We'll need to get this from the search
-            "visibility_scores": raw_analysis.get("visibility_scores", {}),
-            "improvement_suggestions": [],  # We'll extract from the detailed data
-            "chatgpt_analysis": raw_analysis.get("chatgpt_analysis", {})
+            "presence": presence_data,
+            "sentiment": sentiment_data,
+            "competitors": unique_competitors,
+            "search_results": search_results,
+            "visibility_scores": visibility_scores,
+            "improvement_suggestions": improvement_suggestions,
+            "chatgpt_analysis": chatgpt_analysis
         }
-        
-        # Get search results by running a quick search
-        search_results = await brand_monitor.search_brand_references(website, brand_name)
-        analysis_data["search_results"] = search_results
-        
-        # Extract improvement suggestions from the detailed data
-        detailed_data = visibility_data.get("detailed_data", {})
-        analysis_data["improvement_suggestions"] = detailed_data.get("improvement_suggestions", [])
         
         # Generate the blog post
         blog_post = brand_monitor.generate_blog_content(brand_name, website, analysis_data)
