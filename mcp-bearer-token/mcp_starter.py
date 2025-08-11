@@ -1,19 +1,16 @@
 import asyncio
-from typing import Annotated
-import os
 import json
+import os
 import re
+from typing import Annotated
+
+import httpx
 from dotenv import load_dotenv
 from fastmcp import FastMCP
 from fastmcp.server.auth.providers.bearer import BearerAuthProvider, RSAKeyPair
-from mcp import ErrorData, McpError
-from mcp.server.auth.provider import AccessToken
-from mcp.types import TextContent, ImageContent, INVALID_PARAMS, INTERNAL_ERROR
-from pydantic import BaseModel, Field, AnyUrl
-
-import markdownify
-import httpx
-import readabilipy
+from fastmcp.server.errors import McpError, ErrorData
+from fastmcp.server.errors import INTERNAL_ERROR
+from pydantic import BaseModel, Field
 
 # --- Load environment variables ---
 load_dotenv()
@@ -647,51 +644,19 @@ mcp = FastMCP(
 brand_monitor = BrandVisibilityMonitor(SERP_API_KEY, OPENAI_API_KEY)
 
 # --- Tool: validate (required by Puch) ---
-@mcp.tool
-async def validate() -> str:
-    return MY_NUMBER
-
-# --- Tool: job_finder (now smart!) ---
-JobFinderDescription = RichToolDescription(
-    description="Smart job tool: analyze descriptions, fetch URLs, or search jobs based on free text.",
-    use_when="Use this to evaluate job descriptions or search for jobs using freeform goals.",
-    side_effects="Returns insights, fetched job descriptions, or relevant job links.",
+ValidateDescription = RichToolDescription(
+    description="Validate that the MCP server is working correctly.",
+    use_when="Use this to test if the MCP server is functioning properly.",
+    side_effects="Returns a simple validation message confirming the server is operational.",
 )
 
-@mcp.tool(description=JobFinderDescription.model_dump_json())
-async def job_finder(
-    user_goal: Annotated[str, Field(description="The user's goal (can be a description, intent, or freeform query)")],
-    job_description: Annotated[str | None, Field(description="Full job description text, if available.")] = None,
-    job_url: Annotated[AnyUrl | None, Field(description="A URL to fetch a job description from.")] = None,
-    raw: Annotated[bool, Field(description="Return raw HTML content if True")] = False,
-) -> str:
+@mcp.tool(description=ValidateDescription.model_dump_json())
+async def validate() -> str:
     """
-    Handles multiple job discovery methods: direct description, URL fetch, or freeform search query.
+    Validate that the MCP server is working correctly.
+    Returns a simple validation message.
     """
-    if job_description:
-        return (
-            f"📝 **Job Description Analysis**\n\n"
-            f"---\n{job_description.strip()}\n---\n\n"
-            f"User Goal: **{user_goal}**\n\n"
-            f"💡 Suggestions:\n- Tailor your resume.\n- Evaluate skill match.\n- Consider applying if relevant."
-        )
-
-    if job_url:
-        content, _ = await Fetch.fetch_url(str(job_url), Fetch.USER_AGENT, force_raw=raw)
-        return (
-            f"🔗 **Fetched Job Posting from URL**: {job_url}\n\n"
-            f"---\n{content.strip()}\n---\n\n"
-            f"User Goal: **{user_goal}**"
-        )
-
-    if "look for" in user_goal.lower() or "find" in user_goal.lower():
-        links = await Fetch.google_search_links(user_goal)
-        return (
-            f"🔍 **Search Results for**: _{user_goal}_\n\n" +
-            "\n".join(f"- {link}" for link in links)
-        )
-
-    raise McpError(ErrorData(code=INVALID_PARAMS, message="Please provide either a job description, a job URL, or a search query in user_goal."))
+    return "✅ MCP Server is working correctly! Brand visibility monitoring tools are ready."
 
 # --- Tool: Brand Visibility Monitor ---
 BrandVisibilityDescription = RichToolDescription(
@@ -1021,38 +986,6 @@ async def generate_brand_blog_post(
         
     except Exception as e:
         raise McpError(ErrorData(code=INTERNAL_ERROR, message=f"Failed to generate blog post: {str(e)}"))
-
-# Image inputs and sending images
-
-MAKE_IMG_BLACK_AND_WHITE_DESCRIPTION = RichToolDescription(
-    description="Convert an image to black and white and save it.",
-    use_when="Use this tool when the user provides an image URL and requests it to be converted to black and white.",
-    side_effects="The image will be processed and saved in a black and white format.",
-)
-
-@mcp.tool(description=MAKE_IMG_BLACK_AND_WHITE_DESCRIPTION.model_dump_json())
-async def make_img_black_and_white(
-    puch_image_data: Annotated[str, Field(description="Base64-encoded image data to convert to black and white")] = None,
-) -> list[TextContent | ImageContent]:
-    import base64
-    import io
-
-    from PIL import Image
-
-    try:
-        image_bytes = base64.b64decode(puch_image_data)
-        image = Image.open(io.BytesIO(image_bytes))
-
-        bw_image = image.convert("L")
-
-        buf = io.BytesIO()
-        bw_image.save(buf, format="PNG")
-        bw_bytes = buf.getvalue()
-        bw_base64 = base64.b64encode(bw_bytes).decode("utf-8")
-
-        return [ImageContent(type="image", mimeType="image/png", data=bw_base64)]
-    except Exception as e:
-        raise McpError(ErrorData(code=INTERNAL_ERROR, message=str(e)))
 
 # --- Run MCP Server ---
 if __name__ == "__main__":
