@@ -7,10 +7,13 @@ from typing import Annotated
 import httpx
 from dotenv import load_dotenv
 from fastmcp import FastMCP
-from fastmcp.server.auth.providers.bearer import BearerAuthProvider, RSAKeyPair
+from fastmcp.server.auth.providers.bearer import BearerAuthProvider, RSAKeyPair, AccessToken
 from fastmcp.server.errors import McpError, ErrorData
 from fastmcp.server.errors import INTERNAL_ERROR
 from pydantic import BaseModel, Field
+import readabilipy
+import markdownify
+from bs4 import BeautifulSoup
 
 # --- Load environment variables ---
 load_dotenv()
@@ -623,7 +626,6 @@ class Fetch:
             if resp.status_code != 200:
                 return ["<error>Failed to perform search.</error>"]
 
-        from bs4 import BeautifulSoup
         soup = BeautifulSoup(resp.text, "html.parser")
         for a in soup.find_all("a", class_="result__a", href=True):
             href = a["href"]
@@ -652,6 +654,16 @@ async def health_check():
             "mcp": "/mcp",
             "health": "/"
         }
+    }
+
+# Add an additional health check endpoint for Railway
+@mcp.get("/health")
+async def health_check_alt():
+    """Alternative health check endpoint for Railway"""
+    return {
+        "status": "healthy",
+        "service": "Brand Visibility Monitoring MCP Server",
+        "version": "1.0.0"
     }
 
 # Initialize brand visibility monitor
@@ -1015,8 +1027,9 @@ if __name__ == "__main__":
     print(f"🌐 Public URL: Will be available after Railway deployment")
     print("=" * 50)
     
+    # For Railway deployment, use the FastMCP app directly
     uvicorn.run(
-        "mcp_starter:mcp",
+        mcp,
         host="0.0.0.0",
         port=port,
         log_level="info"

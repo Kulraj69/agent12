@@ -1,157 +1,74 @@
-# 🚀 Deployment Guide - Brand Visibility MCP Server
+# Railway Deployment Guide
 
-This guide will help you deploy your MCP server to Railway for public access.
+## Fixed Issues
 
-## 🎯 Why Railway?
+The following issues have been resolved to fix the healthcheck failure:
 
-Railway is the best choice for MCP servers because:
-- ✅ **Python Support**: Native Python application support
-- ✅ **HTTPS Endpoints**: Automatic SSL certificates
-- ✅ **Environment Variables**: Secure API key management
-- ✅ **Auto-Deploy**: Automatic deployments from GitHub
-- ✅ **Free Tier**: Generous free tier for development
+### 1. Missing Dependencies
+- Added `readabilipy>=0.3.0` and `markdownify>=0.11.6` to `requirements.txt`
+- Added missing `AccessToken` import from fastmcp
 
-## 📋 Prerequisites
+### 2. Health Check Endpoints
+- Added multiple health check endpoints (`/` and `/health`)
+- Updated Railway configuration to use `/health` endpoint
+- Increased healthcheck timeout to 300 seconds
 
-1. **GitHub Repository**: Your code should be pushed to GitHub
-2. **Railway Account**: Sign up at [railway.app](https://railway.app)
-3. **API Keys**: Have your SERP and OpenAI API keys ready
+### 3. Server Startup
+- Fixed start script to properly use uvicorn
+- Updated Procfile for Railway deployment
+- Fixed import issues with BeautifulSoup
 
-## 🚀 Step-by-Step Deployment
+## Deployment Steps
 
-### Step 1: Connect to Railway
-
-1. **Go to Railway Dashboard**
-   - Visit [railway.app](https://railway.app)
-   - Sign in with your GitHub account
-
-2. **Create New Project**
-   - Click "New Project"
-   - Select "Deploy from GitHub repo"
-   - Choose your repository: `Kulraj69/agent12`
-
-### Step 2: Configure Environment Variables
-
-1. **Go to Variables Tab**
-   - In your Railway project dashboard
-   - Click on "Variables" tab
-
-2. **Add Environment Variables**
-   ```env
-   AUTH_TOKEN=mcp_secure_token_2024_kulraj_7888686610
-   MY_NUMBER=917888686610
-   SERP_API_KEY=your_serp_api_key_here
-   OPENAI_API_KEY=your_openai_api_key_here
+1. **Push changes to your repository**
+   ```bash
+   git add .
+   git commit -m "Fix Railway deployment issues"
+   git push
    ```
 
-### Step 3: Deploy
+2. **Deploy to Railway**
+   - Railway will automatically detect the changes and redeploy
+   - Monitor the deployment logs for any issues
 
-1. **Automatic Deployment**
-   - Railway will automatically detect the Python app
-   - It will install dependencies from `requirements.txt`
-   - The server will start using the `Procfile`
+3. **Verify Deployment**
+   - Check the Railway dashboard for deployment status
+   - Test the health check endpoint: `https://your-app.railway.app/health`
+   - Test the main endpoint: `https://your-app.railway.app/`
 
-2. **Check Deployment**
-   - Go to "Deployments" tab
-   - Wait for the build to complete (green status)
+## Troubleshooting
 
-### Step 4: Get Your Public URL
+### If healthcheck still fails:
 
-1. **Find Your Domain**
-   - Go to "Settings" tab
-   - Look for "Domains" section
-   - Copy your public URL (e.g., `https://your-app.railway.app`)
-
-2. **Test Your Server**
-   - Visit your URL in browser
-   - You should see the MCP server running
-
-## 🔗 Connect to Puch AI
-
-Once deployed, connect to Puch AI:
-
-1. **Open Puch AI**: [wa.me/+919998881729](https://wa.me/+919998881729)
-
-2. **Use Connect Command**:
+1. **Check Railway logs** for specific error messages
+2. **Verify environment variables** are set correctly in Railway dashboard
+3. **Test locally** using the test script:
+   ```bash
+   cd mcp-starter
+   python test_server.py
    ```
-   /mcp connect https://your-app.railway.app/mcp mcp_secure_token_2024_kulraj_7888686610
-   ```
-
-3. **Test Your Tools**:
-   ```
-   /mcp list
-   ```
-
-## 🔧 Troubleshooting
 
 ### Common Issues:
 
-1. **Build Fails**
-   - Check `requirements.txt` has all dependencies
-   - Verify Python version in `runtime.txt`
+1. **Port binding issues**: The app now uses `$PORT` environment variable
+2. **Import errors**: All dependencies are now properly listed in requirements.txt
+3. **Startup time**: Increased healthcheck timeout to 300 seconds
 
-2. **Environment Variables Missing**
-   - Ensure all variables are set in Railway dashboard
-   - Check variable names match exactly
+## Environment Variables
 
-3. **Server Not Starting**
-   - Check Railway logs in "Deployments" tab
-   - Verify `Procfile` and start command
+Make sure these are set in Railway:
+- `AUTH_TOKEN`: Your MCP authentication token
+- `MY_NUMBER`: Your phone number
+- `SERP_API_KEY`: SerpAPI key (optional)
+- `OPENAI_API_KEY`: OpenAI API key (optional)
+- `PORT`: Railway will set this automatically
 
-4. **Connection Issues**
-   - Ensure URL is correct (https://)
-   - Verify bearer token matches
+## Testing
 
-### Debug Commands:
-
+Run the test script locally to verify everything works:
 ```bash
-# Check Railway logs
-railway logs
-
-# Check environment variables
-railway variables
-
-# Restart deployment
-railway up
+cd mcp-starter
+python test_server.py
 ```
 
-## 📊 Monitoring
-
-### Railway Dashboard Features:
-- **Real-time Logs**: Monitor server activity
-- **Performance Metrics**: CPU, memory usage
-- **Deployment History**: Track changes
-- **Environment Variables**: Manage configuration
-
-### Health Checks:
-- Railway automatically checks `/` endpoint
-- Server should respond with MCP server info
-- Automatic restarts on failure
-
-## 🔒 Security Best Practices
-
-1. **API Keys**: Never commit to GitHub
-2. **Environment Variables**: Use Railway's secure storage
-3. **Bearer Token**: Keep your auth token secure
-4. **HTTPS**: Railway provides automatic SSL
-
-## 🎉 Success!
-
-Once deployed, your MCP server will be:
-- ✅ **Publicly Accessible**: Available 24/7
-- ✅ **HTTPS Secure**: Automatic SSL certificates
-- ✅ **Auto-Scaling**: Handles traffic automatically
-- ✅ **Monitored**: Railway provides monitoring
-- ✅ **Backed Up**: Automatic deployments from GitHub
-
-## 📞 Support
-
-If you encounter issues:
-1. Check Railway logs
-2. Verify environment variables
-3. Test locally first
-4. Check GitHub repository for updates
-
----
-
-**Your MCP server is now live and ready for production use! 🚀** 
+This will test both health check endpoints and the MCP endpoint. 
