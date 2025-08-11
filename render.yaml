@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: mcp-server
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd mcp-bearer-token && python mcp_starter.py
+    envVars:
+      - key: AUTH_TOKEN
+        value: mcp_secure_token_2024_kulraj_7888686610
+      - key: MY_NUMBER
+        value: 917888686610
+      - key: SERP_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false 

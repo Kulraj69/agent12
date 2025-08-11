@@ -1055,9 +1055,22 @@ async def make_img_black_and_white(
         raise McpError(ErrorData(code=INTERNAL_ERROR, message=str(e)))
 
 # --- Run MCP Server ---
-async def main():
-    print("🚀 Starting MCP server on http://0.0.0.0:8086")
-    await mcp.run_async("streamable-http", host="0.0.0.0", port=8086)
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    import uvicorn
+    import os
+    
+    # Get port from Railway environment variable or default to 8086
+    port = int(os.environ.get("PORT", 8086))
+    
+    print(f"🚀 Starting MCP server on http://0.0.0.0:{port}")
+    print(f"🔑 Bearer Token: {AUTH_TOKEN}")
+    print(f"📱 Your Number: {MY_NUMBER}")
+    print(f"🌐 Public URL: Will be available after Railway deployment")
+    print("=" * 50)
+    
+    uvicorn.run(
+        "mcp_starter:mcp",
+        host="0.0.0.0",
+        port=port,
+        log_level="info"
+    )
