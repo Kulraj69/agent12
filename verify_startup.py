@@ -21,8 +21,11 @@ def test_imports():
         import httpx
         from dotenv import load_dotenv
         from fastmcp import FastMCP
-        from fastmcp.server.auth.providers.bearer import BearerAuthProvider, RSAKeyPair, AccessToken
-        from fastmcp.server.errors import McpError, ErrorData
+        from fastmcp.server.auth.providers.bearer import BearerAuthProvider, RSAKeyPair
+        from mcp.server.auth.provider import AccessToken
+        from mcp import McpError, ErrorData
+        # Standard JSON-RPC error codes
+        INTERNAL_ERROR = -32603
         from pydantic import BaseModel, Field
         import readabilipy
         import markdownify
@@ -52,7 +55,8 @@ def test_mcp_creation():
         
         # Test MCP server creation
         from fastmcp import FastMCP
-        from fastmcp.server.auth.providers.bearer import BearerAuthProvider, RSAKeyPair, AccessToken
+        from fastmcp.server.auth.providers.bearer import BearerAuthProvider, RSAKeyPair
+        from mcp.server.auth.provider import AccessToken
         
         class SimpleBearerAuthProvider(BearerAuthProvider):
             def __init__(self, token: str):

@@ -7,9 +7,11 @@ from typing import Annotated
 import httpx
 from dotenv import load_dotenv
 from fastmcp import FastMCP
-from fastmcp.server.auth.providers.bearer import BearerAuthProvider, RSAKeyPair, AccessToken
-from fastmcp.server.errors import McpError, ErrorData
-from fastmcp.server.errors import INTERNAL_ERROR
+from fastmcp.server.auth.providers.bearer import BearerAuthProvider, RSAKeyPair
+from mcp.server.auth.provider import AccessToken
+from mcp import McpError, ErrorData
+# Standard JSON-RPC error codes
+INTERNAL_ERROR = -32603
 from pydantic import BaseModel, Field
 import readabilipy
 import markdownify
@@ -643,10 +645,11 @@ mcp = FastMCP(
 )
 
 # Add a simple health check endpoint
-@mcp.get("/")
-async def health_check():
+@mcp.custom_route("/", methods=["GET"])
+async def health_check(request):
     """Health check endpoint for Railway"""
-    return {
+    from starlette.responses import JSONResponse
+    return JSONResponse({
         "status": "healthy",
         "service": "Brand Visibility Monitoring MCP Server",
         "version": "1.0.0",
@@ -654,17 +657,18 @@ async def health_check():
             "mcp": "/mcp",
             "health": "/"
         }
-    }
+    })
 
 # Add an additional health check endpoint for Railway
-@mcp.get("/health")
-async def health_check_alt():
+@mcp.custom_route("/health", methods=["GET"])
+async def health_check_alt(request):
     """Alternative health check endpoint for Railway"""
-    return {
+    from starlette.responses import JSONResponse
+    return JSONResponse({
         "status": "healthy",
         "service": "Brand Visibility Monitoring MCP Server",
         "version": "1.0.0"
-    }
+    })
 
 # Initialize brand visibility monitor
 brand_monitor = BrandVisibilityMonitor(SERP_API_KEY, OPENAI_API_KEY)
@@ -1027,9 +1031,10 @@ if __name__ == "__main__":
     print(f"🌐 Public URL: Will be available after Railway deployment")
     print("=" * 50)
     
-    # For Railway deployment, use the FastMCP app directly
+    # For Railway deployment, use the FastMCP HTTP app
+    app = mcp.http_app()
     uvicorn.run(
-        mcp,
+        app,
         host="0.0.0.0",
         port=port,
         log_level="info"
