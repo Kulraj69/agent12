@@ -52,6 +52,13 @@ class SimpleBearerAuthProvider(BearerAuthProvider):
         k = RSAKeyPair.generate()
         super().__init__(public_key=k.public_key, jwks_uri=None, issuer=None, audience=None)
         self.token = token
+        
+        # For external users, you could implement user-specific tokens:
+        # self.user_tokens = {
+        #     "user1_token": "user1@example.com",
+        #     "user2_token": "user2@example.com",
+        #     # Add more user tokens as needed
+        # }
 
     async def load_access_token(self, token: str) -> AccessToken | None:
         if token == self.token:
@@ -61,6 +68,14 @@ class SimpleBearerAuthProvider(BearerAuthProvider):
                 scopes=["*"],
                 expires_at=None,
             )
+        # For user-specific tokens:
+        # elif token in self.user_tokens:
+        #     return AccessToken(
+        #         token=token,
+        #         client_id=self.user_tokens[token],
+        #         scopes=["*"],
+        #         expires_at=None,
+        #     )
         return None
 
 # --- Rich Tool Description model ---
@@ -76,6 +91,10 @@ class BrandVisibilityMonitor:
         self.openai_api_key = openai_api_key
         self.base_url = "https://serpapi.com/search"
         self.openai_url = "https://api.openai.com/v1/chat/completions"
+        
+        # For external users, you could add rate limiting:
+        # self.request_counts = {}  # Track requests per user
+        # self.rate_limit = 10  # Requests per hour per user
         
     async def search_brand_references(self, website: str, brand_name: str) -> list[dict]:
         """Search for brand references using SERP API"""
@@ -684,9 +703,9 @@ ValidateDescription = RichToolDescription(
 async def validate() -> str:
     """
     Validate that the MCP server is working correctly.
-    Returns a simple validation message.
+    Returns your phone number in the required format for Puch AI.
     """
-    return "✅ MCP Server is working correctly! Brand visibility monitoring tools are ready."
+    return MY_NUMBER
 
 # --- Tool: Brand Visibility Monitor ---
 BrandVisibilityDescription = RichToolDescription(
