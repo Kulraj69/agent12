@@ -1,179 +1,187 @@
-# MCP Starter for Puch AI
+# Brand Visibility Monitoring MCP Server
 
-This is a starter template for creating your own Model Context Protocol (MCP) server that works with Puch AI. It comes with ready-to-use tools for job searching and image processing.
+A powerful Model Context Protocol (MCP) server that provides comprehensive brand visibility analysis across search engines and AI platforms. This server integrates with SERP API and ChatGPT to deliver detailed insights about brand presence, sentiment, competitors, and SEO opportunities.
 
-## What is MCP?
+## 🚀 Features
 
-MCP (Model Context Protocol) allows AI assistants like Puch to connect to external tools and data sources safely. Think of it like giving your AI extra superpowers without compromising security.
+### Core Brand Analysis
+- **Multi-Platform Visibility**: Analyze brand presence across search engines and AI platforms
+- **Sentiment Analysis**: Comprehensive sentiment analysis using ChatGPT
+- **Competitor Identification**: Automatic competitor detection and analysis
+- **Geographic Distribution**: Regional analysis of brand mentions
+- **SEO Gap Analysis**: Identify keyword opportunities and content gaps
 
-## What's Included in This Starter?
+### Auto-Generated Content
+- **SEO-Optimized Blog Posts**: Automatically generate comprehensive blog content
+- **Keyword Research**: Extract relevant SEO keywords from analysis
+- **Meta Descriptions**: Generate optimized meta descriptions
+- **Content Recommendations**: Actionable content strategy suggestions
 
-## Folders
+## 🛠️ Installation
 
-- **[`mcp-bearer-token/`](./mcp-bearer-token/)**  
-  Example MCP servers using **Bearer token** auth (required by Puch AI). Includes:
-  - **[`mcp_starter.py`](./mcp-bearer-token/mcp_starter.py)**  
-    A minimal MCP server with:
-    - Text input/output tool (echo-style processing)
-    - Image input/output tool (e.g., convert to black & white)
-    - Bearer token validation
-  - **[`puch-user-id-mcp-example.py`](./mcp-bearer-token/puch-user-id-mcp-example.py)**  
-    A task management MCP server that demonstrates how to use `puch_user_id` (a unique, Puch-provided user identifier) to scope tasks and data per user.
+### Prerequisites
+- Python 3.11+
+- `uv` package manager (recommended)
 
-- **[`mcp-google-oauth/`](./mcp-google-oauth/)**  
-  Example MCP server showing how to implement **OAuth** with Google for MCP authentication/authorization.
+### Setup
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/Kulraj69/agent12.git
+   cd agent12
+   ```
 
-- **[`mcp-oauth-github/`](./mcp-oauth-github/)**  
-  Example MCP server showing how to implement **OAuth** with GitHub for MCP authentication/authorization.
+2. **Install dependencies**
+   ```bash
+   uv sync
+   ```
 
-## Quick Setup Guide
+3. **Configure environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your API keys
+   ```
 
-### Step 1: Install Dependencies
+4. **Set up your API keys**
+   - Get a [SERP API key](https://serpapi.com/)
+   - Get an [OpenAI API key](https://platform.openai.com/)
 
-First, make sure you have Python 3.11 or higher installed. Then:
+## 🔧 Configuration
 
-```bash
-# Create virtual environment
-uv venv
-
-# Install all required packages
-uv sync
-
-# Activate the environment
-source .venv/bin/activate
-```
-
-### Step 2: Set Up Environment Variables
-
-Create a `.env` file in the project root:
-
-```bash
-# Copy the example file
-cp .env.example .env
-```
-
-Then edit `.env` and add your details:
+### Environment Variables
+Create a `.env` file with the following variables:
 
 ```env
-AUTH_TOKEN=your_secret_token_here
-MY_NUMBER=919876543210
+# Authentication
+AUTH_TOKEN="your_auth_token_here"
+MY_NUMBER="your_phone_number_here"
+
+# API Keys
+SERP_API_KEY="your_serp_api_key_here"
+OPENAI_API_KEY="your_openai_api_key_here"
 ```
 
-**Important Notes:**
+## 🚀 Usage
 
-- `AUTH_TOKEN`: This is your secret token for authentication. Keep it safe!
-- `MY_NUMBER`: Your WhatsApp number in format `{country_code}{number}` (e.g., `919876543210` for +91-9876543210)
-
-### Step 3: Run the Server
-
+### Starting the Server
 ```bash
 cd mcp-bearer-token
 python mcp_starter.py
 ```
 
-You'll see: `🚀 Starting MCP server on http://0.0.0.0:8086`
+The server will start on port 8086 with the following features:
+- **Bearer Token Authentication**: `mcp_secure_token_2024_kulraj_7888686610`
+- **Public URL**: Available via ngrok tunnel
 
-### Step 4: Make It Public (Required by Puch)
+### Available Tools
 
-Since Puch needs to access your server over HTTPS, you need to expose your local server:
-
-#### Option A: Using ngrok (Recommended)
-
-1. **Install ngrok:**
-   Download from https://ngrok.com/download
-
-2. **Get your authtoken:**
-   - Go to https://dashboard.ngrok.com/get-started/your-authtoken
-   - Copy your authtoken
-   - Run: `ngrok config add-authtoken YOUR_AUTHTOKEN`
-
-3. **Start the tunnel:**
-   ```bash
-   ngrok http 8086
-   ```
-
-#### Option B: Deploy to Cloud
-
-You can also deploy this to services like:
-
-- Railway
-- Render
-- Heroku
-- DigitalOcean App Platform
-
-## How to Connect with Puch AI
-
-1. **[Open Puch AI](https://wa.me/+919998881729)** in your browser
-2. **Start a new conversation**
-3. **Use the connect command:**
-   ```
-   /mcp connect https://your-domain.ngrok.app/mcp your_secret_token_here
-   ```
-
-### Debug Mode
-
-To get more detailed error messages:
-
-```
-/mcp diagnostics-level debug
+#### 1. Brand Visibility Monitor
+```python
+await brand_visibility_monitor(
+    website="https://example.com",
+    brand_name="Example Brand"
+)
 ```
 
-## Customizing the Starter
+**Returns:**
+- Comprehensive brand presence analysis
+- Sentiment distribution and insights
+- Competitor identification
+- Visibility scores by sector
+- Improvement recommendations
 
-### Adding New Tools
+#### 2. Auto-Generated Blog Posts
+```python
+await generate_brand_blog_post(
+    website="https://example.com",
+    brand_name="Example Brand",
+    include_geo_analysis=True,
+    include_seo_gaps=True
+)
+```
 
-1. **Create a new tool function:**
+**Returns:**
+- SEO-optimized blog content
+- Meta descriptions and keywords
+- Geographic distribution insights
+- SEO gap analysis and recommendations
 
-   ```python
-   @mcp.tool(description="Your tool description")
-   async def your_tool_name(
-       parameter: Annotated[str, Field(description="Parameter description")]
-   ) -> str:
-       # Your tool logic here
-       return "Tool result"
-   ```
+## 📊 Analysis Output
 
-2. **Add required imports** if needed
+### Brand Visibility Report Example
+```
+Here's the brand visibility report for Example Brand as of today:
 
-## 📚 **Additional Documentation Resources**
+Overall Presence: Example Brand has a strong online presence with 15 total results, 12 of which directly mention the brand.
 
-### **Official Puch AI MCP Documentation**
+Sentiment: The overall sentiment towards Example Brand is positive.
 
-- **Main Documentation**: https://puch.ai/mcp
-- **Protocol Compatibility**: Core MCP specification with Bearer & OAuth support
-- **Command Reference**: Complete MCP command documentation
-- **Server Requirements**: Tool registration, validation, HTTPS requirements
+Key Competitors: Competitors identified include Competitor A, Competitor B, Competitor C.
 
-### **Technical Specifications**
+Visibility Breakdown:
+- Customer Reviews & Feedback: High visibility (75% score) with a positive sentiment.
+- Industry Analysis & Market Position: Very high visibility (85% score) with a neutral sentiment.
+- Product/Service Comparison: Moderate visibility (60% score) with a positive sentiment.
 
-- **JSON-RPC 2.0 Specification**: https://www.jsonrpc.org/specification (for error handling)
-- **MCP Protocol**: Core protocol messages, tool definitions, authentication
+Improvement Suggestions:
+- Develop stronger competitive differentiation and unique value propositions
+- Improve search engine rankings through better SEO and content strategy
+```
 
-### **Supported vs Unsupported Features**
+## 🔗 Integration with Puch AI
 
-**✓ Supported:**
+This MCP server is designed to work seamlessly with Puch AI:
 
-- Core protocol messages
-- Tool definitions and calls
-- Authentication (Bearer & OAuth)
-- Error handling
+1. **Connect to Puch AI** using the bearer token
+2. **Use the tools** for brand analysis and content generation
+3. **Get real-time insights** about your brand's online presence
 
-**✗ Not Supported:**
+## 📈 SEO Features
 
-- Videos extension
-- Resources extension
-- Prompts extension
+### Keyword Generation
+- Automatic extraction from search results
+- Industry-specific keyword suggestions
+- Long-tail keyword opportunities
+- Competitive keyword analysis
 
-## Getting Help
+### Content Optimization
+- SEO-optimized blog titles and meta descriptions
+- Structured content with proper headings
+- Internal linking suggestions
+- Readability scoring
 
-- **Join Puch AI Discord:** https://discord.gg/VMCnMvYx
-- **Check Puch AI MCP docs:** https://puch.ai/mcp
-- **Puch WhatsApp Number:** +91 99988 81729
+## 🌍 Geographic Analysis
+
+The tool provides geographic distribution analysis:
+- **North America**: Brand mentions in .com, .us, .ca domains
+- **Europe**: Brand mentions in .uk, .de, .fr, .it, .es domains
+- **Asia**: Brand mentions in .jp, .cn, .in, .kr domains
+- **Global**: Brand mentions in .org, .net, .io domains
+
+## 🔒 Security
+
+- **API Key Protection**: Sensitive data is excluded from version control
+- **Bearer Token Authentication**: Secure access to the MCP server
+- **Environment Variables**: All sensitive configuration is externalized
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📞 Support
+
+For support and questions:
+- Create an issue in this repository
+- Check the documentation for common issues
+- Review the example configurations
 
 ---
 
-**Happy coding! 🚀**
-
-Use the hashtag `#BuildWithPuch` in your posts about your MCP!
-
-This starter makes it super easy to create your own MCP server for Puch AI. Just follow the setup steps and you'll be ready to extend Puch with your custom tools!
+**Built with ❤️ for comprehensive brand visibility monitoring**
